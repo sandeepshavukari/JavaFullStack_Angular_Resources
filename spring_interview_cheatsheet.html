@@ -1,0 +1,280 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.tab { padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); font-size: 13px; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+.tab.active { background: var(--color-background-primary); border-color: var(--color-border-primary); color: var(--color-text-primary); font-weight: 500; }
+.section { display: none; }
+.section.active { display: block; }
+.qa { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 10px; overflow: hidden; }
+.q { padding: 12px 16px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: var(--color-background-secondary); color: var(--color-text-primary); gap: 8px; }
+.q:hover { background: var(--color-background-primary); }
+.q .icon { font-size: 14px; color: var(--color-text-tertiary); transition: transform 0.2s; flex-shrink: 0; }
+.qa.open .q .icon { transform: rotate(180deg); }
+.ans { display: none; padding: 12px 16px; font-size: 13.5px; line-height: 1.7; color: var(--color-text-secondary); border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+.qa.open .ans { display: block; }
+code { font-family: var(--font-mono); background: var(--color-background-secondary); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; color: var(--color-text-primary); }
+pre { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; font-size: 12px; font-family: var(--font-mono); overflow-x: auto; margin-top: 8px; line-height: 1.6; color: var(--color-text-primary); }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-right: 4px; margin-bottom: 4px; }
+.b-green { background: #EAF3DE; color: #3B6D11; }
+.b-blue { background: #E6F1FB; color: #185FA5; }
+.b-amber { background: #FAEEDA; color: #854F0B; }
+.b-purple { background: #EEEDFE; color: #534AB7; }
+.b-coral { background: #FAECE7; color: #993C1D; }
+@media (prefers-color-scheme: dark) {
+  .b-green { background: #27500A; color: #C0DD97; }
+  .b-blue { background: #0C447C; color: #B5D4F4; }
+  .b-amber { background: #633806; color: #FAC775; }
+  .b-purple { background: #3C3489; color: #CECBF6; }
+  .b-coral { background: #712B13; color: #F5C4B3; }
+}
+.progress { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 12px; }
+</style>
+
+<div class="wrap">
+  <h2 style="font-size:18px;font-weight:500;margin-bottom:4px;color:var(--color-text-primary)">Spring framework — interview cheatsheet</h2>
+  <p class="progress" id="prog">Click any question to reveal the answer</p>
+  <div class="tabs" id="tabs"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+const data = {
+  "Core Spring": [
+    {
+      q: "What is the Spring IoC container?",
+      a: `IoC (Inversion of Control) means the framework controls object creation, not your code. You define beans; Spring creates, wires, and manages them via the <code>ApplicationContext</code>.<br><br><strong>Two main containers:</strong><br>• <code>BeanFactory</code> – lazy, minimal<br>• <code>ApplicationContext</code> – eager, full-featured (use this always)`
+    },
+    {
+      q: "What is Dependency Injection (DI)?",
+      a: `DI is how IoC is implemented — Spring <em>injects</em> dependencies instead of you creating them with <code>new</code>.<br><br><strong>3 types:</strong><br>• <strong>Constructor injection</strong> (preferred — immutable, easy to test)<br>• Setter injection<br>• Field injection (<code>@Autowired</code> on field — avoid in production)<pre>@Component
+class OrderService {
+  private final PaymentService pay;
+  // constructor injection ✓
+  public OrderService(PaymentService pay) {
+    this.pay = pay;
+  }
+}</pre>`
+    },
+    {
+      q: "What is a Spring Bean?",
+      a: `Any object managed by the Spring container is a bean. You register beans via:<br>• <code>@Component</code>, <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code><br>• <code>@Bean</code> inside a <code>@Configuration</code> class<br><br>Spring handles lifecycle: create → inject → init → use → destroy.`
+    },
+    {
+      q: "What are bean scopes?",
+      a: `<span class="badge b-blue">Singleton</span> One instance per container (default)<br><span class="badge b-green">Prototype</span> New instance every time you request it<br><span class="badge b-amber">Request</span> One per HTTP request (web apps)<br><span class="badge b-purple">Session</span> One per HTTP session (web apps)<br><br>Set with <code>@Scope("prototype")</code> on the bean class.`
+    },
+    {
+      q: "What is @Component vs @Service vs @Repository?",
+      a: `All three are <code>@Component</code> specializations — they all register a bean. The difference is semantic:<br><br>• <code>@Component</code> — generic<br>• <code>@Service</code> — business logic layer<br>• <code>@Repository</code> — data layer; also enables JPA exception translation<br>• <code>@Controller</code> — web layer (handles HTTP)`
+    },
+    {
+      q: "What is @Configuration and @Bean?",
+      a: `<code>@Configuration</code> marks a class as a source of bean definitions. <code>@Bean</code> methods inside it return objects that Spring manages.<pre>@Configuration
+public class AppConfig {
+  @Bean
+  public DataSource dataSource() {
+    return new HikariDataSource(...);
+  }
+}</pre>Use this when you can't annotate a third-party class directly.`
+    },
+    {
+      q: "What is Spring AOP?",
+      a: `Aspect-Oriented Programming lets you add cross-cutting concerns (logging, security, transactions) without polluting business logic.<br><br><strong>Key terms:</strong><br>• <strong>Aspect</strong> – the concern (e.g. logging)<br>• <strong>Advice</strong> – code that runs (<code>@Before</code>, <code>@After</code>, <code>@Around</code>)<br>• <strong>Pointcut</strong> – where it applies (method pattern)<br>• <strong>Join point</strong> – specific point of execution<br><br><code>@Transactional</code> is AOP under the hood.`
+    },
+    {
+      q: "Explain the Spring bean lifecycle",
+      a: `1. Instantiate<br>2. Inject dependencies<br>3. <code>@PostConstruct</code> / <code>afterPropertiesSet()</code><br>4. Bean is ready<br>5. <code>@PreDestroy</code> / <code>destroy()</code> on shutdown<br><br>Use <code>@PostConstruct</code> for init logic and <code>@PreDestroy</code> for cleanup.`
+    }
+  ],
+  "Spring Boot": [
+    {
+      q: "What is Spring Boot?",
+      a: `Spring Boot = Spring + auto-configuration + embedded server + opinionated defaults.<br><br>You write less setup code. It reads your classpath and auto-configures beans (e.g., if it sees <code>spring-data-jpa</code> + a DB driver, it creates a <code>DataSource</code> automatically).`
+    },
+    {
+      q: "What does @SpringBootApplication do?",
+      a: `It's a shortcut for three annotations:<br><br>• <code>@Configuration</code> – marks as config class<br>• <code>@EnableAutoConfiguration</code> – enables Spring Boot magic<br>• <code>@ComponentScan</code> – scans current package + sub-packages for beans<pre>@SpringBootApplication
+public class MyApp {
+  public static void main(String[] args) {
+    SpringApplication.run(MyApp.class, args);
+  }
+}</pre>`
+    },
+    {
+      q: "How does auto-configuration work?",
+      a: `Spring Boot looks at <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code> and conditionally creates beans using <code>@ConditionalOnClass</code>, <code>@ConditionalOnMissingBean</code>, etc.<br><br>Your own beans override auto-configured ones — you always have control.`
+    },
+    {
+      q: "What is application.properties / application.yml?",
+      a: `Central config file for your app. Examples:<br><pre>server.port=8081
+spring.datasource.url=jdbc:mysql://localhost/mydb
+spring.jpa.show-sql=true
+logging.level.com.myapp=DEBUG</pre>Use <code>@Value("${property.name}")</code> to inject values, or <code>@ConfigurationProperties</code> for type-safe config classes.`
+    },
+    {
+      q: "What are Spring Boot profiles?",
+      a: `Profiles let you have environment-specific config.<br><pre># application-dev.properties
+server.port=8080
+
+# application-prod.properties  
+server.port=443</pre>Activate with <code>spring.profiles.active=dev</code> or <code>-Dspring.profiles.active=prod</code>.<br><br>Use <code>@Profile("dev")</code> on beans to load them only in that profile.`
+    },
+    {
+      q: "What is Spring Boot Actuator?",
+      a: `Actuator adds production-ready endpoints to monitor and manage your app:<br><br>• <code>/actuator/health</code> – app health status<br>• <code>/actuator/metrics</code> – JVM, HTTP metrics<br>• <code>/actuator/env</code> – environment properties<br><br>Add <code>spring-boot-starter-actuator</code> to pom.xml and it works out of the box.`
+    },
+    {
+      q: "What is the difference between @SpringBootTest and @WebMvcTest?",
+      a: `<span class="badge b-purple">@SpringBootTest</span> Loads the full application context. Use for integration tests.<br><br><span class="badge b-blue">@WebMvcTest</span> Only loads the web layer (controllers). Much faster. Use <code>@MockBean</code> to mock services.<pre>@WebMvcTest(UserController.class)
+class UserControllerTest {
+  @Autowired MockMvc mvc;
+  @MockBean UserService svc;
+}</pre>`
+    }
+  ],
+  "Spring MVC": [
+    {
+      q: "What is Spring MVC?",
+      a: `Spring MVC is a web framework built on the <strong>Front Controller</strong> pattern. A central <code>DispatcherServlet</code> receives all requests and routes them to the right controller.<br><br>Request flow:<br>Browser → DispatcherServlet → HandlerMapping → Controller → ViewResolver → Response`
+    },
+    {
+      q: "Common REST annotations",
+      a: `<span class="badge b-blue">@RestController</span> = @Controller + @ResponseBody<br><span class="badge b-green">@GetMapping</span> HTTP GET<br><span class="badge b-green">@PostMapping</span> HTTP POST<br><span class="badge b-amber">@PutMapping</span> HTTP PUT<br><span class="badge b-coral">@DeleteMapping</span> HTTP DELETE<br><span class="badge b-purple">@PathVariable</span> Extract from URL path<br><span class="badge b-purple">@RequestParam</span> Query param (?key=val)<br><span class="badge b-purple">@RequestBody</span> Deserialize JSON body`
+    },
+    {
+      q: "How do you handle exceptions globally?",
+      a: `Use <code>@ControllerAdvice</code> (or <code>@RestControllerAdvice</code>) + <code>@ExceptionHandler</code>:<pre>@RestControllerAdvice
+public class GlobalExHandler {
+
+  @ExceptionHandler(ResourceNotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public ErrorDto handle(ResourceNotFoundException ex) {
+    return new ErrorDto(ex.getMessage());
+  }
+}</pre>This catches exceptions from all controllers in one place.`
+    },
+    {
+      q: "What is @ResponseEntity?",
+      a: `<code>ResponseEntity</code> gives you full control over the HTTP response — status, headers, and body:<pre>@GetMapping("/users/{id}")
+public ResponseEntity&lt;User&gt; getUser(@PathVariable Long id) {
+  return userService.find(id)
+    .map(ResponseEntity::ok)
+    .orElse(ResponseEntity.notFound().build());
+}</pre>`
+    },
+    {
+      q: "What is content negotiation?",
+      a: `Spring MVC can return JSON or XML (or other formats) based on the client's <code>Accept</code> header.<br><br>With Jackson on the classpath, JSON is automatic. Add <code>jackson-dataformat-xml</code> for XML support. You don't change controller code — Spring picks the right converter.`
+    },
+    {
+      q: "How do you validate request data?",
+      a: `Use <strong>Bean Validation</strong> (JSR-380) with <code>@Valid</code>:<pre>public record CreateUserDto(
+  @NotBlank String name,
+  @Email String email,
+  @Min(18) int age
+) {}
+
+@PostMapping("/users")
+public User create(@Valid @RequestBody CreateUserDto dto) { ... }</pre>Validation errors throw <code>MethodArgumentNotValidException</code> — catch in <code>@ControllerAdvice</code>.`
+    }
+  ],
+  "Spring Data": [
+    {
+      q: "What is Spring Data JPA?",
+      a: `Spring Data JPA eliminates boilerplate DAO code. Extend <code>JpaRepository</code> and get CRUD + pagination for free:<pre>public interface UserRepository 
+    extends JpaRepository&lt;User, Long&gt; {
+  // nothing else needed for save/findById/delete/findAll
+}</pre>Spring generates the implementation at startup.`
+    },
+    {
+      q: "How does derived query method naming work?",
+      a: `Spring parses method names and generates JPQL automatically:<pre>// SELECT * FROM users WHERE email = ?
+List&lt;User&gt; findByEmail(String email);
+
+// SELECT * FROM users WHERE age > ? ORDER BY name
+List&lt;User&gt; findByAgeGreaterThanOrderByName(int age);
+
+// SELECT * FROM users WHERE name LIKE ?
+List&lt;User&gt; findByNameContaining(String keyword);</pre>`
+    },
+    {
+      q: "When do you use @Query?",
+      a: `When the method name gets too complex or you need a custom query:<pre>@Query("SELECT u FROM User u WHERE u.city = :city AND u.active = true")
+List&lt;User&gt; findActiveByCiry(@Param("city") String city);
+
+// Native SQL
+@Query(value = "SELECT * FROM users WHERE created_at > ?1", nativeQuery = true)
+List&lt;User&gt; findRecent(LocalDate since);</pre>`
+    },
+    {
+      q: "What is @Transactional?",
+      a: `Wraps a method in a database transaction. If the method throws a <code>RuntimeException</code>, the transaction rolls back.<pre>@Service
+public class OrderService {
+  @Transactional
+  public void placeOrder(Order o) {
+    orderRepo.save(o);
+    inventoryService.reduce(o.items()); // if this throws → rollback
+  }
+}</pre>Put it on the service layer, not the repository.`
+    },
+    {
+      q: "What are JPA entity annotations?",
+      a: `<code>@Entity</code> – marks class as a DB table<br><code>@Table(name="orders")</code> – custom table name<br><code>@Id</code> – primary key<br><code>@GeneratedValue(strategy=AUTO)</code> – auto-increment<br><code>@Column(nullable=false)</code> – column constraints<br><code>@OneToMany</code>, <code>@ManyToOne</code>, <code>@ManyToMany</code> – relationships`
+    },
+    {
+      q: "What is the N+1 query problem?",
+      a: `When fetching a list of entities, JPA fires 1 query for the list, then N more queries to load each entity's lazy-loaded association — very slow at scale.<br><br><strong>Fix:</strong> Use <code>JOIN FETCH</code> in JPQL or <code>@EntityGraph</code>:<pre>@Query("SELECT o FROM Order o JOIN FETCH o.items WHERE o.user = :user")
+List&lt;Order&gt; findWithItems(@Param("user") User u);</pre>`
+    },
+    {
+      q: "Difference between save() and saveAndFlush()?",
+      a: `• <code>save()</code> – stages changes in the persistence context; actual SQL may be deferred until the transaction commits<br>• <code>saveAndFlush()</code> – immediately flushes to DB within the current transaction<br><br>Use <code>saveAndFlush()</code> when you need the ID generated immediately or when testing.`
+    }
+  ]
+};
+
+const tabContainer = document.getElementById('tabs');
+const content = document.getElementById('content');
+let activeTab = null;
+let openCount = 0;
+
+function setTab(name) {
+  activeTab = name;
+  tabContainer.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.name === name));
+  content.innerHTML = '';
+  const section = document.createElement('div');
+  section.className = 'section active';
+  data[name].forEach((item, i) => {
+    const qa = document.createElement('div');
+    qa.className = 'qa';
+    qa.innerHTML = `<div class="q">${item.q}<i class="ti ti-chevron-down icon" aria-hidden="true"></i></div><div class="ans">${item.a}</div>`;
+    qa.querySelector('.q').addEventListener('click', () => {
+      const wasOpen = qa.classList.contains('open');
+      qa.classList.toggle('open');
+      if (!wasOpen) { openCount++; updateProg(); }
+    });
+    section.appendChild(qa);
+  });
+  content.appendChild(section);
+}
+
+function updateProg() {
+  document.getElementById('prog').textContent = openCount === 0
+    ? 'Click any question to reveal the answer'
+    : `${openCount} question${openCount > 1 ? 's' : ''} reviewed`;
+}
+
+Object.keys(data).forEach(name => {
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  btn.dataset.name = name;
+  btn.textContent = name;
+  btn.addEventListener('click', () => setTab(name));
+  tabContainer.appendChild(btn);
+});
+
+setTab(Object.keys(data)[0]);
+</script>
